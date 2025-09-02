@@ -1,0 +1,24 @@
+{
+  "other": {
+    "som": "so'm"
+  },
+
+  "buttons": {
+    "order": "Buyurtma qilish",
+    "addToCart": "Savatchaga qo'shish",
+    "onCart": "Allaqachon savatda"
+  },
+
+  "categories": {
+    "all": "Barchasi",
+    "first": "Asosiy taomlar",
+    "second": "Ikkinchi taomlar",
+    "dessert": "Desertlar",
+    "drink": "Ichimliklar"
+  },
+
+  "cart": {
+    "summary": "Buyurtma miqdori",
+    "empty": "Savat bo'sh"
+  }
+}
