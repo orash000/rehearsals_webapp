@@ -8,6 +8,6 @@ export const CATEGORIES_NAME = {
 } as const
 
 export const LANGS = [
-  { code: "uz", label: "UZ", flag: "fi-uz" },
   { code: "ru", label: "RU", flag: "fi-ru" },
+  { code: "uz", label: "UZ", flag: "fi-uz" },
 ] as const

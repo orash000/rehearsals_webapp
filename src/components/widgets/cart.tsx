@@ -31,9 +31,16 @@ export const Cart: React.FC = () => {
       <div className="z-40 drawer">
         <input id="cart-drawer" type="checkbox" className="drawer-toggle" />
         <div className="drawer-content">
-          <label htmlFor="cart-drawer" className="btn btn-primary btn-square drawer-button">
-            <ShoppingCart className="w-5 h-5" />
-          </label>
+          <div className="indicator">
+            {data && data?.length > 0 && (
+              <span className="indicator-item w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold text-white bg-secondary">
+                {data?.length}
+              </span>
+            )}
+            <label htmlFor="cart-drawer" className="btn btn-primary btn-square drawer-button">
+              <ShoppingCart className="w-5 h-5" />
+            </label>
+          </div>
         </div>
 
         <div className="drawer-side">
