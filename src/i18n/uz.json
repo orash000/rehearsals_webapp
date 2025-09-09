@@ -1,6 +1,7 @@
 {
   "other": {
-    "som": "so'm"
+    "som": "so'm",
+    "authError": "Autentifikatsiya xatosi, keyinroq qayta urinib ko'ring"
   },
 
   "buttons": {

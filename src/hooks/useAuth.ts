@@ -1,13 +1,13 @@
 import Cookies from "js-cookie"
 import { useEffect, useState, useCallback } from "react"
 import { useSetTokenMutation, useRefreshTokenMutation } from "api/token.api"
+import { useTelegramUser } from "./useTelegramUser.ts"
 
 const ACCESS_TOKEN_KEY = "access_token"
 const REFRESH_TOKEN_KEY = "refresh_token"
-const TOKEN_TIMESTAMP_KEY = "token_timestamp"
-const TOKEN_EXPIRY_DAYS = 7
 
 export const useAuth = () => {
+  const user = useTelegramUser()
   const [setTokenFunc] = useSetTokenMutation()
   const [refreshTokenFunc] = useRefreshTokenMutation()
   const [token, setToken] = useState<string | null>(null)
@@ -15,11 +15,8 @@ export const useAuth = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true)
 
   const saveTokens = useCallback((accessToken: string, refreshToken: string) => {
-    const timestamp = Date.now()
-
-    Cookies.set(ACCESS_TOKEN_KEY, accessToken, { expires: TOKEN_EXPIRY_DAYS })
-    Cookies.set(REFRESH_TOKEN_KEY, refreshToken, { expires: TOKEN_EXPIRY_DAYS })
-    Cookies.set(TOKEN_TIMESTAMP_KEY, timestamp.toString(), { expires: TOKEN_EXPIRY_DAYS })
+    Cookies.set(ACCESS_TOKEN_KEY, accessToken)
+    Cookies.set(REFRESH_TOKEN_KEY, refreshToken)
 
     setToken(accessToken)
     setIsAuthenticated(true)
@@ -28,26 +25,16 @@ export const useAuth = () => {
   const getTokensFromCookies = useCallback(() => {
     const accessToken = Cookies.get(ACCESS_TOKEN_KEY)
     const refreshToken = Cookies.get(REFRESH_TOKEN_KEY)
-    const timestamp = Cookies.get(TOKEN_TIMESTAMP_KEY)
 
-    return { accessToken, refreshToken, timestamp }
+    return { accessToken, refreshToken }
   }, [])
 
   const clearTokens = useCallback(() => {
     Cookies.remove(ACCESS_TOKEN_KEY)
     Cookies.remove(REFRESH_TOKEN_KEY)
-    Cookies.remove(TOKEN_TIMESTAMP_KEY)
 
     setToken(null)
     setIsAuthenticated(false)
-  }, [])
-
-  const shouldRefreshToken = useCallback((timestamp: string): boolean => {
-    const tokenTime = parseInt(timestamp)
-    const currentTime = Date.now()
-    const daysDiff = (currentTime - tokenTime) / (1000 * 60 * 60 * 24)
-
-    return daysDiff >= TOKEN_EXPIRY_DAYS
   }, [])
 
   const refreshToken = useCallback(async (refreshTokenValue: string) => {
@@ -68,64 +55,48 @@ export const useAuth = () => {
   }, [refreshTokenFunc, getTokensFromCookies, saveTokens, clearTokens])
 
   const login = useCallback(async () => {
-    try {
-      setIsLoading(true)
-      const response = await setTokenFunc({
-        username: "system_main_admin_rehearsals",
-        password: "nikita998pogor1603"
-      })
+    if (user) {
+      try {
+        setIsLoading(true)
+        const response = await setTokenFunc({
+          telegram_id: user.id
+        })
 
-      if (response.data?.access && response.data?.refresh) {
-        saveTokens(response.data.access, response.data.refresh)
-        return true
+        if (response.data?.access && response.data?.refresh) {
+          saveTokens(response.data.access, response.data.refresh)
+          return true
+        }
+      } catch (error) {
+        console.error("Ошибка при авторизации:", error)
+        clearTokens()
+        return false
+      } finally {
+        setIsLoading(false)
       }
-    } catch (error) {
-      console.error("Ошибка при авторизации:", error)
-      clearTokens()
-      return false
-    } finally {
-      setIsLoading(false)
     }
+
     return false
-  }, [setTokenFunc, saveTokens, clearTokens])
+  }, [user, setTokenFunc, saveTokens, clearTokens])
 
   useEffect(() => {
     const initializeAuth = async () => {
-      setIsLoading(true)
+      if (user) {
+        setIsLoading(true)
+        const loginSuccess = await login()
 
-      const { accessToken, refreshToken: refreshTokenValue, timestamp } = getTokensFromCookies()
-
-      if (accessToken && refreshTokenValue && timestamp) {
-        if (shouldRefreshToken(timestamp)) {
-          const refreshSuccess = await refreshToken(refreshTokenValue)
-          if (!refreshSuccess) {
-            await login()
+        if (!loginSuccess) {
+          const { refreshToken: refreshTokenValue } = getTokensFromCookies()
+          if (refreshTokenValue) {
+            await refreshToken(refreshTokenValue)
           }
-        } else {
-          setToken(accessToken)
-          setIsAuthenticated(true)
         }
-      } else {
-        await login()
-      }
 
-      setIsLoading(false)
+        setIsLoading(false)
+      }
     }
 
     initializeAuth()
-  }, [getTokensFromCookies, shouldRefreshToken, refreshToken, login])
-
-  useEffect(() => {
-    const checkTokenInterval = setInterval(() => {
-      const { refreshToken: refreshTokenValue, timestamp } = getTokensFromCookies()
-
-      if (refreshTokenValue && timestamp && shouldRefreshToken(timestamp)) {
-        refreshToken(refreshTokenValue)
-      }
-    }, 24 * 60 * 60 * 1000)
-
-    return () => clearInterval(checkTokenInterval)
-  }, [getTokensFromCookies, shouldRefreshToken, refreshToken])
+  }, [user])
 
   return {
     token,

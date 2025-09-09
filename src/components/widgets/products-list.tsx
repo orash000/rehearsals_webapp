@@ -2,12 +2,14 @@ import { useAddCartItemMutation, useGetCartItemsQuery } from "api/cart.api"
 import { useGetProductsQuery } from "api/product.api"
 import { ProductCard } from "components/ui/product-card"
 import { useGetLocalized } from "hooks/useGetLocalized"
+import { useTelegramUser } from "hooks/useTelegramUser.ts"
 
 interface ProductsListProps {
   selectedCategory: string | null
 }
 
 export const ProductsList: React.FC<ProductsListProps> = ({ selectedCategory }) => {
+  const user = useTelegramUser()
   const { data } = useGetProductsQuery()
   const { data: cartItemsData } = useGetCartItemsQuery()
 
@@ -21,10 +23,15 @@ export const ProductsList: React.FC<ProductsListProps> = ({ selectedCategory }) 
   }
 
   const addToCart = async (productId: number) => {
-    try {
-      await addCartItem({ product_id: productId })
-    } catch (e) {
-      console.log('Error adding to cart:', e)
+    if (user) {
+      try {
+        await addCartItem({
+          product_id: productId,
+          telegram_id: user.id
+        })
+      } catch (e) {
+        console.log('Error adding to cart:', e)
+      }
     }
   }
 

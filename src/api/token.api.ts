@@ -1,8 +1,7 @@
 import { baseApi } from "./baseApi"
 
 interface SetTokenBody {
-  username: string
-  password: string
+  telegram_id: number
 }
 
 interface SetTokenData {
