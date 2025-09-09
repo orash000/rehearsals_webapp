@@ -7,8 +7,12 @@ export const baseApi = createApi({
   tagTypes: ["product", "cartItem", "user"],
   baseQuery: fetchBaseQuery({
     baseUrl: API_URL,
-    headers: {
-      'Authorization': `Bearer ${Cookies.get('access_token')}`
+    prepareHeaders: (headers) => {
+      const token = Cookies.get('access_token')
+      if (token) {
+        headers.set('Authorization', `Bearer ${token}`)
+      }
+      return headers
     }
   }),
   endpoints: () => ({})
